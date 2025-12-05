@@ -1,0 +1,120 @@
+services:
+  suricata:
+    image: jasonish/suricata:latest
+    container_name: consec_suricata
+    cap_add: [NET_ADMIN, NET_RAW, SYS_NICE]
+    # Use bridge network instead of host for better isolation and port forwarding
+    network_mode: "host"
+    volumes:
+      - ./configs/suricata/suricata.yaml:/etc/suricata/suricata.yaml:ro
+      - ./configs/suricata/rules:/etc/suricata/rules:ro
+      - ./consec_data/suricata_logs:/var/log/suricata
+    environment:
+      - SURICATA_INTERFACE=eth0
+    command: suricata -c /etc/suricata/suricata.yaml -i eth0
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "suricata"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  zeek:
+    image: zeek/zeek:latest
+    container_name: consec_zeek
+    cap_add: [NET_ADMIN, NET_RAW]
+    networks:
+      - monitoring_net
+    volumes:
+      - ./configs/zeek/scripts:/opt/zeek/share/zeek/site:ro
+      - ./consec_data/zeek_logs:/opt/zeek/logs
+    environment:
+      - ZEEK_INTERFACE=eth0
+    command: zeek -i eth0 local
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "zeek"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: consec_prometheus
+    networks: 
+      - monitoring_net
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/honeypot_alert_rules.yml:/etc/prometheus/honeypot_alert_rules.yml:ro
+      - ./consec_data/prometheus:/prometheus
+    ports: 
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: consec_grafana
+    networks: 
+      - monitoring_net
+    volumes:
+      - ./configs/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./consec_data/grafana:/var/lib/grafana
+    ports: 
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-pyroscope-app
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  honeypot:
+    build: ./honeypot
+    container_name: consec_honeypot
+    networks:
+      - monitoring_net
+  
+    volumes:
+      - ./consec_data/honeypot_logs:/var/log/honeypot
+    ports:
+      - "2222:2222"
+      - "2323:2323"
+      - "5502:5502"
+      - "8080:8080"
+      - "9445:9445"
+    environment:
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9445/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

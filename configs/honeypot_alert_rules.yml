@@ -1,0 +1,203 @@
+groups:
+  - name: honeypot_alerts
+    interval: 15s
+    rules:
+      # CRITICAL ALERTS
+      - alert: MODBUS_WriteOperation_Detected
+        expr: increase(honeypot_attack_attempts_total{pattern="modbus_write"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: OT_ATTACK
+          service: honeypot
+        annotations:
+          summary: "🚨 CRITICAL: MODBUS Write Operation Detected"
+          description: "Unauthorized MODBUS write operation (Function 5/6/16) detected from {{ $labels.source_ip }} on port {{ $labels.port }}. This indicates an attempt to modify OT/ICS device state."
+          impact: "Active attempt to control industrial equipment"
+          action: "Immediately isolate affected network segment"
+
+      - alert: SQLInjection_AttackSpike
+        expr: rate(honeypot_attack_attempts_total{pattern="sql_injection"}[1m]) > 2
+        for: 2m
+        labels:
+          severity: critical
+          category: WEB_ATTACK
+          service: honeypot
+        annotations:
+          summary: "🚨 CRITICAL: SQL Injection Attack Spike Detected"
+          description: "Multiple SQL injection attempts ({{ $value | humanize }}/sec) from {{ $labels.source_ip }} on port {{ $labels.port }}"
+          impact: "Rapid exploitation attempt - possible data exfiltration"
+          action: "Block source IP immediately, review database activity"
+
+      # HIGH SEVERITY ALERTS
+      - alert: HighSeverityAlertThreshold
+        expr: rate(honeypot_alerts_total{severity="high"}[5m]) > 1
+        for: 3m
+        labels:
+          severity: high
+          category: THREAT_DETECTION
+          service: honeypot
+        annotations:
+          summary: "⚠️ HIGH: Multiple High-Severity Alerts in 5 minutes"
+          description: "{{ $value | humanize }} high-severity alerts/sec detected. Attack pattern {{ $labels.service }}"
+          impact: "Coordinated attack detected"
+          action: "Enable DDoS protection, review firewall rules"
+
+      - alert: SSHBruteForceAttack
+        expr: rate(honeypot_attack_attempts_total{pattern="ssh_brute_force"}[1m]) > 3
+        for: 2m
+        labels:
+          severity: high
+          category: BRUTE_FORCE
+          service: honeypot
+        annotations:
+          summary: "⚠️ HIGH: SSH Brute Force Attack"
+          description: "{{ $value | humanize }} SSH brute force attempts/sec from {{ $labels.source_ip }} on port 2222"
+          impact: "Credential compromise risk"
+          action: "Enable rate limiting, block IP after 5 failed attempts"
+
+      - alert: TelnetBruteForceAttack
+        expr: rate(honeypot_attack_attempts_total{pattern="telnet_brute_force"}[1m]) > 3
+        for: 2m
+        labels:
+          severity: high
+          category: BRUTE_FORCE
+          service: honeypot
+        annotations:
+          summary: "⚠️ HIGH: Telnet Brute Force Attack"
+          description: "{{ $value | humanize }} Telnet brute force attempts/sec from {{ $labels.source_ip }} on port 2323"
+          impact: "Unencrypted credential transmission attempted"
+          action: "Disable Telnet service, migrate to SSH"
+
+      - alert: MultiPortAttackPattern
+        expr: count(count by (source_ip) (honeypot_connections_total)) > 2
+        for: 5m
+        labels:
+          severity: high
+          category: MULTI_VECTOR
+          service: honeypot
+        annotations:
+          summary: "⚠️ HIGH: Multi-Port Attack Pattern Detected"
+          description: "Single source IP attacking multiple ports simultaneously. Possible network reconnaissance."
+          impact: "Advanced attacker probing defenses"
+          action: "Review all logs from source IP, consider blocking"
+
+      - alert: UnusualPayloadSize
+        expr: histogram_quantile(0.95, rate(honeypot_payload_size_bytes_bucket[5m])) > 10000
+        for: 5m
+        labels:
+          severity: high
+          category: ANOMALY
+          service: honeypot
+        annotations:
+          summary: "⚠️ HIGH: Unusual Payload Size Detected"
+          description: "95th percentile payload size exceeds 10KB ({{ $value | humanize }}). Possible data exfiltration attempt."
+          impact: "Potential data breach"
+          action: "Inspect payload contents, review data access logs"
+
+      # MEDIUM SEVERITY ALERTS
+      - alert: SustainedAttackActivity
+        expr: rate(honeypot_connections_total[5m]) > 5
+        for: 10m
+        labels:
+          severity: medium
+          category: SUSTAINED_ATTACK
+          service: honeypot
+        annotations:
+          summary: "⚡ MEDIUM: Sustained Attack Activity"
+          description: "{{ $value | humanize }} connections/sec for 10+ minutes. Service: {{ $labels.service }}"
+          impact: "Prolonged attack - possible DoS attempt"
+          action: "Monitor resource usage, enable rate limiting"
+
+      - alert: NewAttackerIP
+        expr: increase(honeypot_unique_attackers[15m]) > 0
+        for: 5m
+        labels:
+          severity: medium
+          category: NEW_THREAT
+          service: honeypot
+        annotations:
+          summary: "⚡ MEDIUM: New Attacker IP Detected"
+          description: "{{ $value | humanize }} unique attacker IPs in last 15 minutes"
+          impact: "Attack from new source - possible botnet activity"
+          action: "Add to watchlist, correlate with threat intelligence"
+
+      - alert: PathTraversalAttempt
+        expr: increase(honeypot_attack_attempts_total{pattern="path_traversal"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: medium
+          category: EXPLOIT
+          service: honeypot
+        annotations:
+          summary: "⚡ MEDIUM: Path Traversal Attempt"
+          description: "Path traversal attack detected from {{ $labels.source_ip }} on port {{ $labels.port }}"
+          impact: "Attempt to access unauthorized files"
+          action: "Review file system permissions, enable Web Application Firewall (WAF)"
+
+      - alert: SessionDurationAnomaly
+        expr: histogram_quantile(0.95, rate(honeypot_session_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: medium
+          category: ANOMALY
+          service: honeypot
+        annotations:
+          summary: "⚡ MEDIUM: Unusual Session Duration"
+          description: "95th percentile session duration exceeds 60 seconds. Service: {{ $labels.service }}"
+          impact: "Possible interactive exploitation or data gathering"
+          action: "Review session logs, check for lateral movement"
+
+      # LOW SEVERITY ALERTS (INFORMATIONAL)
+      - alert: GeneralAttackActivity
+        expr: rate(honeypot_connections_total[1m]) > 0
+        for: 5m
+        labels:
+          severity: info
+          category: RECONNAISSANCE
+          service: honeypot
+        annotations:
+          summary: "ℹ️ INFO: Attack Activity Detected"
+          description: "Honeypot detected connection attempts on port {{ $labels.port }} ({{ $labels.service }})"
+          impact: "Normal honeypot operation - attack captured"
+          action: "Log for analysis and threat intelligence"
+
+      # SYSTEM HEALTH ALERTS
+      - alert: HoneypotDown
+        expr: up{job="honeypot"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: SYSTEM_HEALTH
+          service: honeypot
+        annotations:
+          summary: "🚨 CRITICAL: Honeypot Service Down"
+          description: "Honeypot metrics endpoint unreachable for 2 minutes"
+          impact: "Attack detection system offline"
+          action: "Restart honeypot container: docker compose restart honeypot"
+
+      - alert: PrometheusScrapeFailing
+        expr: up{job="honeypot"} == 0 or rate(scrape_samples_scraped{job="honeypot"}[5m]) == 0
+        for: 5m
+        labels:
+          severity: high
+          category: SYSTEM_HEALTH
+          service: prometheus
+        annotations:
+          summary: "⚠️ HIGH: Prometheus Not Scraping Honeypot"
+          description: "Prometheus unable to scrape honeypot metrics for 5 minutes"
+          impact: "No visibility into attack detection"
+          action: "Check Prometheus logs: docker compose logs prometheus"
+
+      - alert: MetricsStorageLow
+        expr: node_filesystem_avail_bytes{mountpoint="/prometheus"} < 1073741824
+        for: 10m
+        labels:
+          severity: high
+          category: SYSTEM_HEALTH
+          service: prometheus
+        annotations:
+          summary: "⚠️ HIGH: Prometheus Storage Low"
+          description: "Less than 1GB free space in Prometheus data directory"
+          impact: "May lose historical metrics"
+          action: "Clean old data or expand storage: docker exec consec_prometheus promtool tsdb clean-tombstones /prometheus"

@@ -1,0 +1,28 @@
+%YAML 1.1
+---
+# Suricata Configuration - IDS Mode
+default-log-dir: /var/log/suricata
+pcap-log:
+  enabled: yes
+
+af-packet:
+  - interface: eth0
+
+rule-files:
+  - /etc/suricata/rules/custom.rules
+
+logging:
+  default-log-level: info
+  outputs:
+    - eve-log:
+        enabled: yes
+        filetype: regular
+        filename: /var/log/suricata/eve.json
+        types:
+          - alert
+          - http
+          - dns
+          - tls
+          - files
+          - ssh
+          - smtp

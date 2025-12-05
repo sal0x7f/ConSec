@@ -1,0 +1,76 @@
+# ==========================================
+# Industrial Control System Security Rules
+# ==========================================
+
+# ========== MODBUS (Port 502) ==========
+# Modbus Write Single Coil (Function 5) - Potential unauthorized control
+alert tcp any any -> any 502 (msg:"MODBUS Write Single Coil"; flow:to_server,established; content:"|00 05|"; offset:6; depth:2; sid:1000001; rev:1;)
+
+# Modbus Write Multiple Registers (Function 16) - Potential unauthorized control  
+alert tcp any any -> any 502 (msg:"MODBUS Write Multiple Registers"; flow:to_server,established; content:"|00 10|"; offset:6; depth:2; sid:1000002; rev:1;)
+
+# Modbus Write Single Register (Function 6) - Potential unauthorized control
+alert tcp any any -> any 502 (msg:"MODBUS Write Single Register"; flow:to_server,established; content:"|00 06|"; offset:6; depth:2; sid:1000003; rev:1;)
+
+# Modbus Exception Response - Potential attack or device error
+alert tcp any 502 -> any any (msg:"MODBUS Exception Response"; flow:from_server,established; content:"|80|"; offset:6; depth:1; sid:1000004; rev:1;)
+
+# ========== DNP3 (Port 20000) ==========
+# DNP3 Outstation Confirmation - Abnormal pattern
+alert tcp any any -> any 20000 (msg:"DNP3 Outstation Confirmation"; flow:to_server,established; content:"|05 64|"; sid:1000005; rev:1;)
+
+# DNP3 Control Relay Output Block - Unauthorized control attempt
+alert tcp any any -> any 20000 (msg:"DNP3 Control Relay Output"; flow:to_server,established; content:"|01 03 00|"; sid:1000006; rev:1;)
+
+# ========== PROFINET (Port 34962) ==========
+# PROFINET Class 2/3 Real-time - Abnormal traffic
+alert tcp any any -> any 34962 (msg:"PROFINET RT Class Access"; flow:to_server,established; sid:1000007; rev:1;)
+
+# ========== PROFIBUS (Port 9600-9618) ==========
+# PROFIBUS DP communication detected
+alert tcp any any -> any 9600:9618 (msg:"PROFIBUS DP Communication"; flow:to_server,established; sid:1000008; rev:1;)
+
+# ========== BACNET (Port 47808) ==========
+# BACnet WHO-IS broadcast - Network discovery
+alert udp any any -> any 47808 (msg:"BACnet WHO-IS Discovery"; content:"|81 80|"; sid:1000009; rev:1;)
+
+# BACnet APDU Confirm Service - Abnormal responses
+alert tcp any any -> any 47808 (msg:"BACnet Confirm Service"; flow:to_server,established; content:"|81|"; offset:0; depth:1; sid:1000010; rev:1;)
+
+# ========== OPC UA (Port 4840) ==========
+# OPC UA Hello message - Connection attempt
+alert tcp any any -> any 4840 (msg:"OPC UA Connection Attempt"; flow:to_server,established; content:"HEL|00|"; sid:1000011; rev:1;)
+
+# ========== ETHERNET/IP (Ports 2222, 44818) ==========
+# EtherNet/IP implicit messaging
+alert tcp any any -> any 44818 (msg:"EtherNet/IP Session Established"; flow:to_server,established; content:"|65 00|"; offset:0; depth:2; sid:1000012; rev:1;)
+
+# EtherNet/IP UCMM (Unconnected Messages) 
+alert tcp any any -> any 2222 (msg:"EtherNet/IP UCMM"; flow:to_server,established; sid:1000013; rev:1;)
+
+# ========== ICMP - ICS/OT SPECIFIC ==========
+# ICMP Timestamp requests - Recon activity
+alert icmp any any -> any any (msg:"ICMP Timestamp Request - Potential Recon"; itype:13; sid:1000014; rev:1;)
+
+# ICMP Info requests - Recon activity
+alert icmp any any -> any any (msg:"ICMP Information Request - Potential Recon"; itype:15; sid:1000015; rev:1;)
+
+# ========== GENERAL ANOMALIES ==========
+# Excessive failed login attempts (SSH port scanning proxy)
+alert tcp any any -> any 22 (msg:"SSH Brute Force Attempt"; flow:to_server,established; content:"SSH"; depth:10; sid:1000016; rev:1;)
+
+# Port scanning activity - Multiple connection attempts
+alert tcp any any -> any any (msg:"Possible Port Scan Activity"; flow:to_server; flags:S; threshold:type threshold, track by_src, count 10, seconds 60; sid:1000017; rev:1;)
+
+# Suspicious large data transfer - Data exfiltration attempt
+alert tcp any any -> any any (msg:"Large Data Transfer Detected"; flow:to_server,established; filesize:>10485760; sid:1000018; rev:1;)
+
+# HTTP SQL Injection attempts
+alert http any any -> any any (msg:"SQL Injection Attempt Detected"; flow:to_server,established; content:"union"; http_uri; nocase; sid:1000019; rev:1;)
+
+# ========== PROTOCOL ANOMALIES ==========
+# Invalid TCP flags - Potential network attack
+alert tcp any any -> any any (msg:"Suspicious TCP Flags"; flow:to_server; flags:FPU,1; sid:1000020; rev:1;)
+
+# Fragmented packets - Potential evasion
+alert ip any any -> any any (msg:"IP Fragmentation Detected"; fragbits:M; sid:1000021; rev:1;)

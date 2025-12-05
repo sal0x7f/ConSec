@@ -1,0 +1,18 @@
+{
+	"ulid": "01KBQQ2MYC5KXJ206K613NAAQ9",
+	"minTime": 1764927835548,
+	"maxTime": 1764928800000,
+	"stats": {
+		"numSamples": 38930,
+		"numFloatSamples": 38930,
+		"numSeries": 684,
+		"numChunks": 684
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01KBQQ2MYC5KXJ206K613NAAQ9"
+		]
+	},
+	"version": 1
+}
