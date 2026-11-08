@@ -47,7 +47,7 @@ up: setup-env setup-dirs ## Start containers
 	@sleep 2
 	@make status
 
-down: ## Stop containers
+down: ## Stop containers from running
 	@echo "$(BLUE)Stopping ConSEC services...$(NC)"
 	docker compose down
 	@echo "$(GREEN)✓ Services stopped$(NC)"
