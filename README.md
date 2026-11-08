@@ -1,4 +1,5 @@
-# ConSEC - Container Security Monitoring Stack
+# ConSEC - Cntainerized Intrusion Detection Environment for Industrial Control Systems
+
 
 A comprehensive Docker-based security monitoring stack combining **Prometheus**, **Grafana**, **Suricata** (Network IDS), and **Zeek** (Network Analysis) for network security monitoring and visualization.
 
@@ -302,4 +303,3 @@ After deployment, verify:
 
 **Version**: 1.0  
 **Last Updated**: 2026-11-8  
-**Maintainer**: ConSEC Team
