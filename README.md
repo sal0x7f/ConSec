@@ -301,5 +301,5 @@ After deployment, verify:
 ---
 
 **Version**: 1.0  
-**Last Updated**: 2025-11-26  
+**Last Updated**: 2026-11-8  
 **Maintainer**: ConSEC Team
