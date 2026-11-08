@@ -65,7 +65,7 @@ setup_environment() {
     log_info "✓ Environment setup complete"
 }
 
-# Build custom image (optional)
+# Build custom image (optionaal)
 build_image() {
     log_info "Building custom ConSEC Docker image..."
     docker build -t consec-base:latest -f "${PROJECT_DIR}/Dockerfile" "${PROJECT_DIR}"
