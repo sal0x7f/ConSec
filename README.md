@@ -88,17 +88,6 @@ ZEEK_INTERFACE=eth0
 PROMETHEUS_RETENTION=30d
 ```
 
-### Network Interfaces
-
-Update interface names in `.env` if your system uses different interface names:
-- `eth0` (default)
-- `ens0` (common on VMs)
-- `wlan0` (wireless)
-
-To find your interface:
-```bash
-ip link show
-```
 
 ### Suricata Configuration
 
@@ -224,20 +213,6 @@ consec_project/
     └── zeek_logs/         # Zeek logs
 ```
 
-## 🔒 Security Considerations
-
-### Production Deployment
-1. Change default Grafana password (`.env`)
-2. Use HTTPS/TLS for external access
-3. Configure Prometheus authentication
-4. Implement firewall rules
-5. Use SSH key-based authentication
-6. Run with non-root user (already configured)
-
-### Network Isolation
-- Services use internal `monitoring_net` bridge network
-- Only Prometheus (9090) and Grafana (3000) exposed
-- Suricata/Zeek run in isolated network namespace
 
 ## 🐛 Troubleshooting
 
