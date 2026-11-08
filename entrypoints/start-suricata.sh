@@ -8,7 +8,7 @@ CONFIG_FILE="${CONFIG_FILE:-/etc/suricata/suricata.yaml}"
 
 # Ensure logs directory exists
 mkdir -p "${LOG_FILE%/*}"
-
+#####
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Starting Suricata on interface: $SURICATA_INTERFACE" | tee -a "$LOG_FILE"
 
 # Verify interface exists
