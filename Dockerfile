@@ -41,7 +41,7 @@ RUN chmod +x /home/secuser/consec/entrypoints/*.sh
 # Copy config files
 COPY --chown=secuser:secuser configs/ /home/secuser/consec/configs/
 
-# Set user
+# Set user for this env
 USER secuser
 
 # Health check
