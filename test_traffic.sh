@@ -29,7 +29,7 @@ for i in {1..5}; do
   (timeout 1 bash -c "echo test > /dev/tcp/127.0.0.1/22" 2>/dev/null) &
 done
 wait
-echo "Sent 5 test connections"
+echo "Sent 7 test connections"
 echo ""
 
 # Test 6: Check Suricata is detecting traffic
