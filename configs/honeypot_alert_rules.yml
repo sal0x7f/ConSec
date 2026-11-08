@@ -1,6 +1,6 @@
 groups:
   - name: honeypot_alerts
-    interval: 15s
+    interval: 10s
     rules:
       # CRITICAL ALERTS
       - alert: MODBUS_WriteOperation_Detected
