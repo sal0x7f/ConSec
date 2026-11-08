@@ -23,7 +23,7 @@ RUN useradd -m -u 1000 honeypot && \
 
 USER honeypot
 
-# Expose honeypot ports
+# Expose honeypot ports for attract intruder
 EXPOSE 2222 2323 5502 8080 9445
 
 # Health check
